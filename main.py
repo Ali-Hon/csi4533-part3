@@ -9,7 +9,7 @@ if __name__ == "__main__":
     # Définir les répertoires source et de sortie, et le nom de l'image
     source_path_dir = "examples/source"
     output_path_dir = "examples/output"
-    image_name = "sample_2.png"
+    image_name = "sample_1.png"
 
     # Charger le modèle et appliquer les transformations à l'image
     seg_model, transforms = model.get_model()
@@ -25,6 +25,7 @@ if __name__ == "__main__":
         output = seg_model([transformed_img])
 
     # Traiter le résultat de l'inférence
-    result = tools.process_inference(output,image)
+    # result = tools.process_inference(output,image)
+    result = tools.apply_saved_mask(image)
     result.save(os.path.join(output_path_dir, image_name))
     # result.show()
