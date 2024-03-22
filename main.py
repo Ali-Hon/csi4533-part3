@@ -25,7 +25,10 @@ if __name__ == "__main__":
         output = seg_model([transformed_img])
 
     # Traiter le résultat de l'inférence
-    # result = tools.process_inference(output,image)
-    result = tools.apply_saved_mask(image)
+    result = tools.process_inference(output,image)
+        
+    ## (optional) apply saved mask
+    #result = tools.apply_saved_mask(image)
+    
     result.save(os.path.join(output_path_dir, image_name))
     # result.show()
