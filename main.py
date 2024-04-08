@@ -2,6 +2,7 @@ import os
 from PIL import Image
 from utils import model, tools
 import torch
+import generate_reference
 
 # Point d'entrée principal du script
 if __name__ == "__main__":
@@ -9,29 +10,14 @@ if __name__ == "__main__":
     source_path_dir = "images/"
     output_path_dir = "images_output/"
 
-        # get masks for reference people
+    # get masks for reference people
+    generate_reference.generate_ref_masks()
+
     # reference_histograms: [hist1, hist2, ...]
     # make histograms from reference people masks
     reference_histograms = []
-    for image_name in os.listdir('reference_people/input'):
-        print(image_name)
-        # Charger le modèle et appliquer les transformations à l'image
-        seg_model, transforms = model.get_model()
-
-        # Ouvrir l'image et appliquer les transformations
-        image_path = os.path.join('reference_people/input', image_name)
-        image = Image.open(image_path)
-        transformed_img = transforms(image)
-
-        # Effectuer l'inférence sur l'image transformée sans calculer les gradients
-        with torch.no_grad():
-            output = seg_model([transformed_img])
-
-        # Traiter le résultat de l'inférence
-        result = tools.process_inference(output, image, os.path.join('reference_people', 'saved_masks', image_name.removesuffix('.png') + '_saved_masks.npy'))
-            
-        result.save(os.path.join('reference_people/output', image_name))
-        # result.show()
+    for person_mask in os.listdir(os.path.join('reference_people', 'saved_masks')):
+        reference_histograms.append(np.histogram(person_mask))
 
     # generating images with masks as per part2
     # also generating npy files for each image with the masks saved
@@ -40,6 +26,7 @@ if __name__ == "__main__":
         for image_name in os.listdir(os.path.join(source_path_dir, feed)):
             if image_name in os.listdir(os.path.join(output_path_dir, feed)):
                 continue
+
             # Charger le modèle et appliquer les transformations à l'image
             seg_model, transforms = model.get_model()
 
@@ -52,7 +39,7 @@ if __name__ == "__main__":
             with torch.no_grad():
                 output = seg_model([transformed_img])
 
-            # current path where we save the npy file of masks of the current imag being generated
+            # current path where we save the npy file of masks of the current image being generated
             current_saved_masks_path = os.path.join(output_path_dir, feed, 'saved_masks', image_name.removesuffix('.png') + '_saved_masks.npy')
             # Traiter le résultat de l'inférence
             result = tools.process_inference(output, image, current_saved_masks_path)
@@ -71,11 +58,10 @@ if __name__ == "__main__":
             for mask_filename in os.listdir(os.path.join(output_path_dir, feed, 'saved_masks')):
                 print(os.path.join(output_path_dir, feed, 'saved_masks', mask_filename))
                 current_masks = tools.read_saved_masks(os.path.join(output_path_dir, feed, 'saved_masks', mask_filename))
-                print(current_masks)
                 for mask in current_masks:
                     print(mask_filename)
 
-                    correlation = 1
+                    correlation = person_histogram.compare()
 
                     if len(results) < 100:
                         results.append(correlation)
