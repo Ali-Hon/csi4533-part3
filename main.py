@@ -7,11 +7,19 @@ import generate_reference
 import time
 import numpy as np
 
-def calculate_histogram(mask_path, bins=256):
+def calculate_histograms(mask_path, bins=256):
     mask = np.load(mask_path)
-    hist, _ = np.histogram(mask, bins=bins, range=(0, 256))
-    hist = hist.astype('float32') / hist.sum()
-    return hist
+    # Calculate the full mask histogram
+    full_hist, _ = np.histogram(mask, bins=bins, range=(0, 256))
+    full_hist = full_hist.astype('float32') / full_hist.sum()
+
+    # Calculate the top half mask histogram
+    num_rows = mask.shape[0] // 2
+    top_half_mask = mask[:num_rows, :]
+    top_half_hist, _ = np.histogram(top_half_mask, bins=bins, range=(0, 256))
+    top_half_hist = top_half_hist.astype('float32') / top_half_hist.sum()
+
+    return full_hist, top_half_hist
 
 # Point d'entrée principal du script
 if __name__ == "__main__":
@@ -28,8 +36,12 @@ if __name__ == "__main__":
     reference_histograms = []
     path_to_masks = os.path.join('reference_people', 'saved_masks')
     for person in os.listdir(path_to_masks):
-        hist = calculate_histogram(os.path.join(path_to_masks, person))
-        reference_histograms.append(hist)
+    full_hist, top_half_hist = calculate_histograms(os.path.join(path_to_masks, person))
+    reference_histograms.append({'full': full_hist, 'top_half': top_half_hist})
+    # Use the following line to get the full histogram or the top_half
+# first_person_full_hist = reference_histograms[0]['full']  
+# first_person_full_hist = reference_histograms[0]['top_half']  
+
     
     # generating images with masks as per part2
     # also generating npy files for each image with the masks saved
