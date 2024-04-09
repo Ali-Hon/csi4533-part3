@@ -31,9 +31,6 @@ if __name__ == "__main__":
         hist = calculate_histogram(os.path.join(path_to_masks, person))
         reference_histograms.append(hist)
     
-    # get half histograms
-    half_histograms = []
-    
     # generating images with masks as per part2
     # also generating npy files for each image with the masks saved
     # so we can read them later and do computations using them
@@ -66,25 +63,38 @@ if __name__ == "__main__":
                 result.save(os.path.join(output_path_dir, feed, image_name))
                 # result.show()
 
-    results = []
-    corresponding_filename = []
+    end_results = []
+    end_corresponding_filename = []
+    target_folder = ['person1','person2','person3','person4','person5']
     # compare each reference person's histogram to the histogram the 'masked' people from part2's RCNN
     for i, person_histogram in enumerate(reference_histograms):
+        f = open(os.path.join('output_results', target_folder[i], f'output_{target_folder[i]}.txt'), 'w')
+
+        # lists for results of current lists
+        # results[i] was found in the saved_masks file at corresponding_filename[i]
+        results = []
+        corresponding_filename = []
         for feed in ['cam0', 'cam1']:
             for mask_filename in os.listdir(os.path.join(output_path_dir, feed, 'saved_masks')):
-                print(os.path.join(output_path_dir, feed, 'saved_masks', mask_filename))
+                # if mask_filename in os.listdir(os.path.join(output_path_dir, feed, 'saved_masks')):
+                #     continue
+
                 current_masks = tools.read_saved_masks(os.path.join(output_path_dir, feed, 'saved_masks', mask_filename))
                 for j, mask in enumerate(current_masks):
-                    print(mask_filename)
-        
                     hist = calculate_histogram(os.path.join('reference_people', 'saved_masks', person))
-                    
                     correlation = cv.compareHist(person_histogram, hist, cv.HISTCMP_CORREL)
-                    print(f"Person {i} Histogram Comparison with Mask {j} in file {mask_filename}: {correlation}")
 
+                    out_s = f"Person {i + 1} Histogram Comparison with Mask {j} in file {mask_filename}: {correlation}"
+                    print(out_s)
+                    f.write(out_s + '\n')
+
+                    # logic to keep best 100 results for current person
+                    # fill it in up to 100
                     if len(results) < 100:
                         results.append(correlation)
                         corresponding_filename.append(mask_filename)
+                    # when it's 100, take out the worst (min) result and replace it with the 
+                    # currently computed correlation if it's better then it
                     elif min(results) < correlation:
                         i = results.index(min(results))
                         results.remove(min(results))
@@ -93,6 +103,13 @@ if __name__ == "__main__":
                         results.append(correlation)
                         corresponding_filename.append(mask_filename)
 
-    d = zip(results, corresponding_filename)
-    for el in d:
-        print(el)
+        # write the results for current person to 'end' lists
+        end_results.append(results)
+        end_corresponding_filename.append(corresponding_filename)
+
+        f.close()
+
+    print(len(end_results))
+    print(len(end_corresponding_filename))
+    print(len(end_results[0]))
+    print(len(end_corresponding_filename[0]))
