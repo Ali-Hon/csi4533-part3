@@ -11,6 +11,10 @@ source_path_dir = "reference_people/input"
 output_path_dir = "reference_people/output"
 
 def generate_ref_masks():
+    """
+    Generate masks for reference people
+    This is used in main.py to generate their histograms
+    """
     for image_name in os.listdir(source_path_dir):
         # Load the image
         image_path = os.path.join(source_path_dir, image_name)

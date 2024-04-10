@@ -4,10 +4,10 @@ from PIL import Image
 from utils import model, tools
 import torch
 import generate_reference
-import time
 import numpy as np
 
 def calculate_histograms(mask_path, bins=256):
+    """calculates full and half histograms"""
     mask = np.load(mask_path)
     # Calculate the full mask histogram
     full_hist, _ = np.histogram(mask, bins=bins, range=(0, 256))
@@ -47,6 +47,8 @@ if __name__ == "__main__":
             for image_name in os.listdir(os.path.join(source_path_dir, feed)):
                 if image_name in os.listdir(os.path.join(output_path_dir, feed)):
                     continue
+                
+                print(image_name)
 
                 # Charger le modèle et appliquer les transformations à l'image
                 seg_model, transforms = model.get_model()
@@ -71,11 +73,14 @@ if __name__ == "__main__":
                 result.save(os.path.join(output_path_dir, feed, image_name))
                 # result.show()
 
+    # final results for all reference people stored here
     end_results = []
     end_corresponding_filename = []
+    # folder where results need to be stored
     target_folder = ['person1','person2','person3','person4','person5']
     # compare each reference person's histogram to the histogram the 'masked' people from part2's RCNN
     for i, person_histogram_dict in enumerate(reference_histograms):
+        # file where results are saved for top 100 comparaisons for current person
         f = open(os.path.join('output_results', target_folder[i], f'output_{target_folder[i]}.txt'), 'w')
         for ref_hist_key in ['full', 'top_half']:
             # lists for results of current lists
@@ -95,12 +100,15 @@ if __name__ == "__main__":
                             out_s = f"Person {i + 1} Histogram Comparison with Mask {j} in file {mask_filename}: {correlation}"
                             print(out_s)
                             f.write(out_s + '\n')
-
+                            
+                            img_path = os.path.join(source_path_dir, feed, mask_filename.removesuffix('_saved_masks.npy') + '.png')
                             # logic to keep best 100 results for current person
                             # fill it in up to 100
                             if len(results) < 100:
                                 results.append(correlation)
                                 corresponding_filename.append(mask_filename)
+
+                                tools.draw_box(mask, img_path, os.path.join('output_results', target_folder[i]), mask_filename.removesuffix('_saved_masks.npy') + '.png')
                             # when it's 100, take out the worst (min) result and replace it with the 
                             # currently computed correlation if it's better then it
                             elif min(results) < correlation:
@@ -110,6 +118,8 @@ if __name__ == "__main__":
 
                                 results.append(correlation)
                                 corresponding_filename.append(mask_filename)
+
+                                tools.draw_box(mask, img_path, os.path.join('output_results', target_folder[i]), mask_filename.removesuffix('_saved_masks.npy') + '.png')
 
         # write the results for current person to 'end' lists
         end_results.append(results)
@@ -121,3 +131,4 @@ if __name__ == "__main__":
     print(len(end_corresponding_filename))
     print(len(end_results[0]))
     print(len(end_corresponding_filename[0]))
+    print(len(set(end_corresponding_filename[0])))
