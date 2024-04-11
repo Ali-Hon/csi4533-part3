@@ -27,6 +27,7 @@ if __name__ == "__main__":
     source_path_dir = "images/"
     output_path_dir = "images_output/"
 
+    # False quand on veut générer tout fichiers du début
     skip = True
     # get masks for reference people
     if not skip:
@@ -42,7 +43,7 @@ if __name__ == "__main__":
     # generating images with masks as per part2
     # also generating npy files for each image with the masks saved
     # so we can read them later and do computations using them
-    if not skip:
+    if True:
         for feed in ['cam0', 'cam1']:
             for image_name in os.listdir(os.path.join(source_path_dir, feed)):
                 if image_name in os.listdir(os.path.join(output_path_dir, feed)):

@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+import uuid
 
 def draw_box(mask, img_path, target_path, img_name):
     """
@@ -16,7 +17,9 @@ def draw_box(mask, img_path, target_path, img_name):
     # draw the bbox on the image
     draw_bb([bbox], image)
     # IMPORTANT: save it in the appropriate person output folder as wanted for the results of the part3
-    image.save(os.path.join(target_path, img_name))
+    # using uui4().hex to make sure each image name is unique, ensuring that some of the top 100 correlations
+    # in the same image do not override each other
+    image.save(os.path.join(target_path, uuid.uuid4().hex + '_' + img_name))
 
 # get bbox boundaries where numpy_mask > 0, i.e. where the pixel is a 1
 # this means that the person is there on the image, so we can draw a mask around that
