@@ -1,5 +1,6 @@
 import os
 import cv2 as cv
+import uuid
 from PIL import Image
 from utils import model, tools
 import torch
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     # generating images with masks as per part2
     # also generating npy files for each image with the masks saved
     # so we can read them later and do computations using them
-    if True:
+    if not skip:
         for feed in ['cam0', 'cam1']:
             for image_name in os.listdir(os.path.join(source_path_dir, feed)):
                 if image_name in os.listdir(os.path.join(output_path_dir, feed)):
@@ -98,29 +99,38 @@ if __name__ == "__main__":
                         full_hist, half_hist = calculate_histograms(os.path.join('reference_people', 'saved_masks', person))
                         for dataset_hist in [full_hist, half_hist]:
                             correlation = cv.compareHist(person_histogram_dict[ref_hist_key], dataset_hist, cv.HISTCMP_CORREL)
+
                             out_s = f"Person {i + 1} Histogram Comparison with Mask {j} in file {mask_filename}: {correlation}"
                             print(out_s)
-                            f.write(out_s + '\n')
                             
+                            mask_filename_new = uuid.uuid4().hex + '_' + mask_filename.removesuffix('_saved_masks.npy') + '.png'
+                            # print(mask_filename_new)
+
                             img_path = os.path.join(source_path_dir, feed, mask_filename.removesuffix('_saved_masks.npy') + '.png')
                             # logic to keep best 100 results for current person
-                            # fill it in up to 100
+                            # fill it i n up to 100
                             if len(results) < 100:
                                 results.append(correlation)
-                                corresponding_filename.append(mask_filename)
+                                corresponding_filename.append(mask_filename_new)
 
-                                tools.draw_box(mask, img_path, os.path.join('output_results', target_folder[i]), mask_filename.removesuffix('_saved_masks.npy') + '.png')
+                                f.write(out_s + '\n')
+
+                                tools.draw_box(mask, img_path, os.path.join('output_results', target_folder[i]), mask_filename_new)
                             # when it's 100, take out the worst (min) result and replace it with the 
                             # currently computed correlation if it's better then it
+                            # updating
                             elif min(results) < correlation:
                                 index = results.index(min(results))
                                 results.remove(min(results))
+                                os.remove(os.path.join('output_results', target_folder[i], corresponding_filename[index]))
                                 corresponding_filename.remove(corresponding_filename[index])
 
                                 results.append(correlation)
-                                corresponding_filename.append(mask_filename)
+                                corresponding_filename.append(mask_filename_new)
 
-                                tools.draw_box(mask, img_path, os.path.join('output_results', target_folder[i]), mask_filename.removesuffix('_saved_masks.npy') + '.png')
+                                f.write(out_s + '\n')
+
+                                tools.draw_box(mask, img_path, os.path.join('output_results', target_folder[i]), mask_filename_new)
 
         # write the results for current person to 'end' lists
         end_results.append(results)
